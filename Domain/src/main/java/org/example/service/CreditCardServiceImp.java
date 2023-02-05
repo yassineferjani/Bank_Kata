@@ -10,82 +10,74 @@ import org.example.port.AccountServicePort;
 import org.example.port.CreditCardServicePort;
 import org.example.port.TransactionPersistencePort;
 import org.example.port.TransactionServicePort;
+import org.springframework.stereotype.Service;
 
 import java.util.Date;
-
+import java.util.Optional;
+@Service
 public class CreditCardServiceImp implements CreditCardServicePort {
-    private TransactionServicePort transactionServicePort;
     private AccountServicePort accountServicePort;
     private TransactionPersistencePort transactionPersistencePort;
 
-    public CreditCardServiceImp(TransactionServicePort transactionServicePort, AccountServicePort accountServicePort, TransactionPersistencePort transactionPersistencePort){
+    public CreditCardServiceImp(AccountServicePort accountServicePort, TransactionPersistencePort transactionPersistencePort){
         this.accountServicePort = accountServicePort;
-        this.transactionServicePort = transactionServicePort;
         this.transactionPersistencePort = transactionPersistencePort;
     }
 
     @Override
-    public AccountDTO withdrawal(Long rib, double amount) {
-        AccountDTO account = accountServicePort.getById(rib);
-
-        if (account == null) {
-            throw new AccountNotFoundException("Account Not Found");
-        }
-        else {
-            if(account.getBalance()>= amount){
-
-                TransactionDTO transaction = new TransactionDTO();
-                transaction.setOldBalance(account.getBalance());
-                transaction.setNewBalance(account.getBalance()-amount);
-                transaction.setDateTransaction(new Date());
-                transaction.setAmount(amount);
-                transaction.setTransactionType(TransactionType.Withdrawal);
-                transaction.setAccountId(account.getRib());
-                account.setBalance(account.getBalance()-amount);
-                transactionPersistencePort.add(transaction);
-                accountServicePort.update(account);
-
-                return account;
-            }
-            else
-                throw new Insufficientfunds("Insufficient funds");
-        }
+    public synchronized AccountDTO withdrawal(Long rib, double amount) {
+        return accountServicePort.getById(rib)
+                .filter(account -> account.getBalance() >= amount)
+                .map(account -> {transactionPersistencePort.add(TransactionDTO.builder()
+                        .accountId(rib)
+                        .amount(amount)
+                        .dateTransaction(new Date())
+                        .transactionType(TransactionType.Withdrawal)
+                        .oldBalance(accountServicePort.getById(rib).get().getBalance())
+                        .newBalance(accountServicePort.getById(rib).get().getBalance() - amount)
+                        .build());
+                    account.setBalance(account.getBalance() - amount);
+                    accountServicePort.update(account);
+                    return account;
+                })
+                .orElseThrow(() -> new AccountNotFoundException("Account Not Found"));
     }
 
     @Override
-    public AccountDTO deposit(Long rib, double amount) {
-        AccountDTO account = accountServicePort.getById(rib);
-        if (account == null) {
-            throw new AccountNotFoundException("Account Not Found");
-        }
-        else {
-            TransactionDTO transaction = new TransactionDTO();
-            transaction.setOldBalance(account.getBalance());
-            transaction.setNewBalance(account.getBalance()+amount);
-            transaction.setDateTransaction(new Date());
-            transaction.setAmount(amount);
-            transaction.setTransactionType(TransactionType.Deposit);
-            transaction.setAccountId(account.getRib());
-            account.setBalance(account.getBalance() + amount);
-            transactionPersistencePort.add(transaction);
-            accountServicePort.update(account);
-            return account;
-        }
+    public synchronized AccountDTO deposit(Long rib, double amount) {
+        return accountServicePort.getById(rib)
+                .map(account -> {
+                    transactionPersistencePort.add(TransactionDTO.builder()
+                            .accountId(rib)
+                            .amount(amount)
+                            .dateTransaction(new Date())
+                            .transactionType(TransactionType.Deposit)
+                            .oldBalance(accountServicePort.getById(rib).get().getBalance())
+                            .newBalance(accountServicePort.getById(rib).get().getBalance() + amount)
+                            .build());
+                    account.setBalance(account.getBalance() + amount);
+                    accountServicePort.update(account);
+                    return account;
+                })
+                .orElseThrow(() -> new AccountNotFoundException("Account Not Found"));
     }
 
     @Override
-    public void deleteById(Long id) {
+    public synchronized void deleteById(Long id) {
         TransactionDTO transactionDTO = transactionPersistencePort.getById(id);
-        if (transactionDTO != null){
-            Long accountDTO = transactionDTO.getAccountId();
-            if (transactionDTO.getTransactionType()== TransactionType.Deposit){
-                withdrawal(accountDTO,transactionDTO.getAmount());
-            }else {
-                deposit(accountDTO,transactionDTO.getAmount());
-            }
-        }else {
-            throw  new TransactionNotFoundException("Transaction Not Found");
-        }
+        Optional.ofNullable(transactionDTO)
+                .ifPresentOrElse(
+                        t -> {
+                            Long accountDTO = t.getAccountId();
+                            if (t.getTransactionType() == TransactionType.Deposit) {
+                                withdrawal(accountDTO, t.getAmount());
+                            } else {
+                                deposit(accountDTO, t.getAmount());
+                            }
+                        },
+                        () -> {
+                            throw new TransactionNotFoundException("Transaction Not Found");
+                        });
     }
 
 }

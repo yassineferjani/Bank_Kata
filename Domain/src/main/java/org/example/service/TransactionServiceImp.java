@@ -10,20 +10,17 @@ import org.example.port.AccountServicePort;
 import org.example.port.CreditCardServicePort;
 import org.example.port.TransactionPersistencePort;
 import org.example.port.TransactionServicePort;
+import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
-
+@Service
 public class TransactionServiceImp implements TransactionServicePort {
 
     private TransactionPersistencePort transactionPersistencePort;
-    private AccountServicePort accountServicePort;
-    private CreditCardServicePort creditCardServicePort;
 
-
-    public TransactionServiceImp(TransactionPersistencePort transactionPersistencePort,AccountServicePort accountServicePort){
+    public TransactionServiceImp(TransactionPersistencePort transactionPersistencePort){
         this.transactionPersistencePort=transactionPersistencePort;
-        this.accountServicePort=accountServicePort;
 
     }
 
@@ -37,7 +34,7 @@ public class TransactionServiceImp implements TransactionServicePort {
         List<TransactionDTO> transactionDTOS = transactionPersistencePort.getAll().stream()
                 .filter(t->t.getAccountId()==id)
                 .collect(Collectors.toList());
-        if (transactionDTOS.size()==0)
+        if (transactionDTOS.isEmpty())
             throw new TransactionNotFoundException("No Transaction");
         return transactionDTOS;
 

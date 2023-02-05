@@ -26,7 +26,7 @@ public class AccountController {
 	
 	@GetMapping("/")
 	public  ResponseEntity<AccountDTO> getByRib(@RequestParam("rib") Long rib) {
-		return new ResponseEntity<>(accountServicePort.getById(rib),HttpStatus.OK);
+		return new ResponseEntity<>(accountServicePort.getById(rib).get(),HttpStatus.OK);
 	}
 	
 	@PostMapping("/add")

@@ -1,5 +1,6 @@
 package MappersTest;
 import org.example.data.TransactionDTO;
+import org.example.entities.Account;
 import org.example.entities.Transaction;
 import org.example.mappers.TransactionMapper;
 
@@ -10,7 +11,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
 public class TransactionMapperTest {
@@ -26,6 +27,7 @@ public class TransactionMapperTest {
 	public void getTransactionDTOFromTransactionTest() {
 		Transaction transaction = new Transaction();
 		transaction.setId(1L);
+		transaction.setAccount(new Account());
 		TransactionDTO transactionDTO = transactionMapper.getTransactionDTOFromTransaction(transaction);
 		assertEquals(transaction.getId(), transactionDTO.getId());
 	}
@@ -33,8 +35,9 @@ public class TransactionMapperTest {
 	@Test
 	public void getTransactionFromTransactionDTOTest() {
 		TransactionDTO transactionDTO = new TransactionDTO();
+		Account account = new Account();
 		transactionDTO.setId(1L);
-		Transaction transaction = transactionMapper.getTransactionFromTransactionDTO(transactionDTO);
+		Transaction transaction = transactionMapper.getTransactionFromTransactionDTO(transactionDTO,account);
 		assertEquals(transactionDTO.getId(), transaction.getId());
 	}
 }

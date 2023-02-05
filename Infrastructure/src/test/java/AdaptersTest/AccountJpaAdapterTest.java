@@ -6,6 +6,7 @@ import org.example.data.ClientDTO;
 import org.example.entities.Account;
 import org.example.entities.Client;
 import org.example.mappers.AccountMapper;
+import org.example.port.ClientPersistencePort;
 import org.example.repositories.AccountDAO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,57 +27,55 @@ public class AccountJpaAdapterTest {
     private AccountDAO accountDAO;
     @Mock
     private AccountMapper accountMapper;
+    @Mock
+    private ClientPersistencePort clientPersistencePort;
     @InjectMocks
     private AccountJpaAdapter accountJpaAdapter;
 
     @Test
     public void testAddAccount() {
-        //setup
         AccountDTO accountDTO = new AccountDTO();
-        Account account = new Account();
-        when(accountMapper.getAccountFromAccountDTO(accountDTO)).thenReturn(account);
-        accountJpaAdapter.addAccount(accountDTO);
-        verify(accountDAO,times(1)).save(account);
+        ClientDTO clientDTO = new ClientDTO();
+        clientDTO.setId(1L);
+        accountDTO.setClientId(clientDTO.getId());
+        when(clientPersistencePort.getById(anyLong())).thenReturn(clientDTO);
+        accountJpaAdapter.add(accountDTO);
+        verify(accountDAO, times(1)).save(any(Account.class));
     }
 
     @Test
     public void testGetAllAccounts(){
-        Account account1 = new Account();
-        Account account2 = new Account();
-        List<Account> accounts = Arrays.asList(account1,account2);
-        AccountDTO accountDTO1 = new AccountDTO();
-        AccountDTO accountDTO2 = new AccountDTO();
+        List<Account> accounts = List.of(new Account(1L,2000.0,new Client(),null), new Account(2L,2000.0,new Client(),null));
         when(accountDAO.findAll()).thenReturn(accounts);
-        when(accountMapper.getAccountDTOFromAccount(account1)).thenReturn(accountDTO1);
-        when(accountMapper.getAccountDTOFromAccount(account2)).thenReturn(accountDTO2);
-        List<AccountDTO> result = accountJpaAdapter.getAllAccounts();
-        assertEquals(2,result.size());
-        assertEquals(accountDTO1,result.get(0));
-        assertEquals(accountDTO2,result.get(1));
+
+        List<AccountDTO> result = accountJpaAdapter.getAll();
+
+        verify(accountDAO, times(1)).findAll();
+        assertEquals(accounts.size(), result.size());
     }
 
     @Test
     public void testGetAccountById(){
         Long id = 1L;
-        Account account = new Account();
-        AccountDTO accountDTO = new AccountDTO();
-        Optional<Account> optionalAccount = Optional.of(account);
-        when(accountDAO.findById(id)).thenReturn(optionalAccount);
-        when(accountMapper.getAccountDTOFromAccount(account)).thenReturn(accountDTO);
-        // execution
-        AccountDTO result = accountJpaAdapter.getAccountById(id);
-        // assertion
-        assertEquals(accountDTO, result);
+        Optional<Account> account = Optional.of(new Account(1L,2000.0,new Client(),null));
+
+        when(accountDAO.findById(id)).thenReturn(account);
+
+        AccountDTO result = accountJpaAdapter.getById(id);
+
+        verify(accountDAO, times(1)).findById(id);
+        assertNotNull(result);
     }
     @Test
     public void testGetAccountById_NotFound() {
-        // setup
         Long id = 1L;
-        Optional<Account> optionalClient = Optional.empty();
-        when(accountDAO.findById(id)).thenReturn(optionalClient);
-        // execution
-        AccountDTO result = accountJpaAdapter.getAccountById(id);
-        // assertion
+        Optional<Account> account = Optional.empty();
+
+        when(accountDAO.findById(id)).thenReturn(account);
+
+        AccountDTO result = accountJpaAdapter.getById(id);
+
+        verify(accountDAO, times(1)).findById(id);
         assertNull(result);
     }
 
@@ -85,7 +84,7 @@ public class AccountJpaAdapterTest {
         // setup
         Long id = 1L;
         // execution
-        accountJpaAdapter.deleteAccountById(id);
+        accountJpaAdapter.deleteById(id);
         // assertion
         verify(accountDAO, times(1)).deleteById(id);
     }

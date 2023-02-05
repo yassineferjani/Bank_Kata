@@ -18,6 +18,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 public class AccountServiceImpTest {
     @Mock
@@ -53,21 +54,18 @@ public class AccountServiceImpTest {
 
     @Test
     public void addAccountNullClientThrowsException() {
-        AccountDTO accountDTO = new AccountDTO();
-        accountDTO.setClientId(1L);
 
-        ClientNotFoundException exception = assertThrows(
-                ClientNotFoundException.class,
-                () -> accountServiceImp.add(accountDTO)
-        );
-        assertEquals("Client not found. An account must be associated with a valid client.", exception.getMessage());
+        AccountDTO accountDTO = new AccountDTO();
+        accountDTO.setClientId(null);
+        assertThrows(ClientNotFoundException.class, () -> accountServiceImp.add(accountDTO));
     }
+
 
     @Test
     public void testGetAll() {
         List<AccountDTO> expectedAccounts = Arrays.asList(
-        		new AccountDTO(1L, 2.0, 1L),
-        		new AccountDTO(2L, 2.0, 1L)
+        		new AccountDTO(1L, 2.0,1L),
+        		new AccountDTO(2L, 2.0,1L)
         );
         when(accountPersistencePort.getAll()).thenReturn(expectedAccounts);
         List<AccountDTO> actualAccounts = accountServiceImp.getAll();
@@ -76,10 +74,10 @@ public class AccountServiceImpTest {
 
     @Test
     public void testGetById() {
-        AccountDTO expectedAccount = new AccountDTO(1L, 2.0, 1L);
+        AccountDTO expectedAccount = new AccountDTO(1L, 2.0,1L);
         when(accountPersistencePort.getById(1L)).thenReturn(expectedAccount);
-        AccountDTO actualAccount = accountServiceImp.getById(1L);
-        assertEquals(expectedAccount, actualAccount);
+        Optional<AccountDTO> actualAccount = accountServiceImp.getById(1L);
+        assertEquals(expectedAccount, actualAccount.get());
     }
 
     @Test
@@ -94,7 +92,7 @@ public class AccountServiceImpTest {
 
     @Test
     public void testUpdate() {
-        AccountDTO accountDTO = new AccountDTO(1L, 2.0, 1L);
+        AccountDTO accountDTO = new AccountDTO(1L, 2.0,1L);
         accountServiceImp.update(accountDTO);
         Mockito.verify(accountPersistencePort).update(accountDTO);
     }

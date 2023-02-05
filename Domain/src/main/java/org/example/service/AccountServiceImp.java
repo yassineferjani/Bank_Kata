@@ -6,9 +6,11 @@ import org.example.exception.ClientNotFoundException;
 import org.example.port.AccountPersistencePort;
 import org.example.port.AccountServicePort;
 import org.example.port.ClientServicePort;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
-
+import java.util.Optional;
+@Service
 public class AccountServiceImp implements AccountServicePort {
     private AccountPersistencePort accountPersistencePort;
     private ClientServicePort clientServicePort;
@@ -32,11 +34,11 @@ public class AccountServiceImp implements AccountServicePort {
     }
 
     @Override
-    public AccountDTO getById(Long id) {
+    public Optional<AccountDTO> getById(Long id) {
         AccountDTO accountDTO = accountPersistencePort.getById(id);
         if (accountDTO==null)
             throw new AccountNotFoundException("Account Not Found");
-        return accountDTO;
+        return Optional.of(accountDTO);
     }
 
     @Override

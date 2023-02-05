@@ -4,9 +4,10 @@ import org.example.data.ClientDTO;
 import org.example.exception.ClientNotFoundException;
 import org.example.port.ClientPersistencePort;
 import org.example.port.ClientServicePort;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
-
+@Service
 public class ClientServiceImp implements ClientServicePort {
     private ClientPersistencePort clientPersistencePort;
 
@@ -33,7 +34,6 @@ public class ClientServiceImp implements ClientServicePort {
 
     @Override
     public void deleteById(Long id) {
-       getById(id);
        clientPersistencePort.deleteById(id);
     }
 

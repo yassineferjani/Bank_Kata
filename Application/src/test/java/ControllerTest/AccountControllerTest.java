@@ -5,6 +5,7 @@ import static org.mockito.Mockito.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.example.controllers.AccountController;
 import org.example.data.AccountDTO;
@@ -35,6 +36,7 @@ public class AccountControllerTest {
         accountDTOList = new ArrayList<>();
         accountDTO = new AccountDTO();
         accountDTO.setRib(1L);
+        accountDTO.setClientId(1L);
         accountDTO.setBalance(1000.0);
         accountDTOList.add(accountDTO);
     }
@@ -49,11 +51,12 @@ public class AccountControllerTest {
 
     @Test
     void testGetByRib() {
-        when(accountServicePort.getById(1L)).thenReturn(accountDTO);
-        ResponseEntity<AccountDTO> response = accountController.getByRib(1L);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(accountDTO, response.getBody());
+        when(accountServicePort.getById(1L)).thenReturn(Optional.of(accountDTO));
+        ResponseEntity<AccountDTO> result = accountController.getByRib(1L);
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+        assertEquals(accountDTO, result.getBody());
     }
+
 
     @Test
     void testAdd() {

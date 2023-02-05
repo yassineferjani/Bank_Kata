@@ -80,6 +80,6 @@ public class TransactionControllerTest {
     @Test
     void testDeleteById() {
         transactionController.deleteById(1L);
-        verify(transactionServicePort, times(1)).deleteById(1L);
+        verify(creditCardServicePort, times(1)).deleteById(1L);
     }
 }

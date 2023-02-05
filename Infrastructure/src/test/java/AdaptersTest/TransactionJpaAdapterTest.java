@@ -1,9 +1,15 @@
 package AdaptersTest;
 
 import org.example.adapters.TransactionJpaAdapter;
+import org.example.data.AccountDTO;
+import org.example.data.ClientDTO;
 import org.example.data.TransactionDTO;
+import org.example.entities.Account;
 import org.example.entities.Transaction;
 import org.example.mappers.TransactionMapper;
+import org.example.port.AccountPersistencePort;
+import org.example.port.ClientPersistencePort;
+import org.example.repositories.AccountDAO;
 import org.example.repositories.TransactionDAO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -25,55 +32,60 @@ public class TransactionJpaAdapterTest {
     private TransactionDAO transactionDAO;
 
     @Mock
-    private TransactionMapper transactionMapper;
+    private AccountDAO accountDAO;
+
+    @Mock
+    private ClientPersistencePort clientPersistencePort;
+
+    @Mock
+    private AccountPersistencePort accountPersistencePort;
 
     @InjectMocks
     private TransactionJpaAdapter transactionJpaAdapter;
 
     @Test
     public void testAddTransaction() {
-        // setup
         TransactionDTO transactionDTO = new TransactionDTO();
+        AccountDTO accountDTO = new AccountDTO();
+        ClientDTO clientDTO = new ClientDTO();
+        Account account = new Account();
         Transaction transaction = new Transaction();
-        when(transactionMapper.getTransactionFromTransactionDTO(transactionDTO)).thenReturn(transaction);
-        // execution
-        transactionJpaAdapter.addTransaction(transactionDTO);
-        // assertion
-        verify(transactionDAO, times(1)).save(transaction);
+
+        when(accountPersistencePort.getById(transactionDTO.getAccountId())).thenReturn(accountDTO);
+        when(clientPersistencePort.getById(accountDTO.getClientId())).thenReturn(clientDTO);
+        when(transactionDAO.save(any(Transaction.class))).thenReturn(transaction);
+
+        transactionJpaAdapter.add(transactionDTO);
+
+        verify(transactionDAO, times(1)).save(any(Transaction.class));
     }
 
     @Test
     public void testGetAllTransactions() {
-        // setup
-        Transaction transaction1 = new Transaction();
-        Transaction transaction2 = new Transaction();
-        List<Transaction> transactions = Arrays.asList(transaction1, transaction2);
-        TransactionDTO transactionDTO1 = new TransactionDTO();
-        TransactionDTO transactionDTO2 = new TransactionDTO();
+        List<Transaction> transactions = new ArrayList<>();
+        List<TransactionDTO> expectedTransactions = new ArrayList<>();
         when(transactionDAO.findAll()).thenReturn(transactions);
-        when(transactionMapper.getTransactionDTOFromTransaction(transaction1)).thenReturn(transactionDTO1);
-        when(transactionMapper.getTransactionDTOFromTransaction(transaction2)).thenReturn(transactionDTO2);
-        // execution
-        List<TransactionDTO> result = transactionJpaAdapter.getAllTransactions();
-        // assertion
-        assertEquals(2, result.size());
-        assertEquals(transactionDTO1, result.get(0));
-        assertEquals(transactionDTO2, result.get(1));
+
+        List<TransactionDTO> result = transactionJpaAdapter.getAll();
+
+        verify(transactionDAO, times(1)).findAll();
+        assertEquals(expectedTransactions, result);
     }
 
     @Test
     public void testGetTransactionById() {
-        // setup
         Long id = 1L;
         Transaction transaction = new Transaction();
-        TransactionDTO transactionDTO = new TransactionDTO();
+        transaction.setAccount(new Account());
+        TransactionDTO expectedTransaction = new TransactionDTO();
         Optional<Transaction> optionalTransaction = Optional.of(transaction);
+
         when(transactionDAO.findById(id)).thenReturn(optionalTransaction);
-        when(transactionMapper.getTransactionDTOFromTransaction(transaction)).thenReturn(transactionDTO);
-        // execution
-        TransactionDTO result = transactionJpaAdapter.getTransactionById(id);
-        // assertion
-        assertEquals(transactionDTO, result);
+
+        TransactionDTO result = transactionJpaAdapter.getById(id);
+
+        verify(transactionDAO, times(1)).findById(id);
+        assertEquals(expectedTransaction, result);
     }
 
     @Test
@@ -83,7 +95,7 @@ public class TransactionJpaAdapterTest {
         Optional<Transaction> optionalTransaction = Optional.empty();
         when(transactionDAO.findById(id)).thenReturn(optionalTransaction);
         // execution
-        TransactionDTO result = transactionJpaAdapter.getTransactionById(id);
+        TransactionDTO result = transactionJpaAdapter.getById(id);
         // assertion
         assertNull(result);
     }
@@ -93,7 +105,7 @@ public class TransactionJpaAdapterTest {
         // setup
         Long id = 1L;
         // execution
-        transactionJpaAdapter.deleteTransactionById(id);
+        transactionJpaAdapter.deleteById(id);
         // assertion
         verify(transactionDAO, times(1)).deleteById(id);
     }

@@ -1,7 +1,5 @@
 package MappersTest;
 
-import static org.junit.Assert.assertEquals;
-
 import org.example.data.ClientDTO;
 import org.example.entities.Client;
 import org.example.mappers.ClientMapper;
@@ -11,6 +9,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
 class ClientMapperTest {
@@ -24,7 +24,7 @@ class ClientMapperTest {
 
     @Test
     public void getClientDTOFromClientTest() {
-    	Client client  = new Client(1L, null, null,0, null,null);
+    	Client client  = new Client(1L, null, null,"0", null,null);
         ClientDTO clientDTO = clientMapper.getClientDTOFromClient(client);
         assertEquals(client.getId(), clientDTO.getId());
     }

@@ -45,17 +45,16 @@ public class TransactionJpaAdapter implements TransactionPersistencePort {
 
     @Override
     public List<TransactionDTO> getAll() {
-        List<Transaction> transactions = transactionDAO.findAll();
-        return transactions.stream().map(t-> TransactionMapper.getTransactionDTOFromTransaction(t)).collect(Collectors.toList());
+
+        return transactionDAO.findAll().stream()
+                .map(t-> TransactionMapper.getTransactionDTOFromTransaction(t))
+                .collect(Collectors.toList());
     }
 
     @Override
     public TransactionDTO getById(Long id) {
         Optional<Transaction> transaction = transactionDAO.findById(id);
-        if (transaction.isPresent())
-            return TransactionMapper.getTransactionDTOFromTransaction(transaction.get());
-        else
-            return null;
+        return TransactionMapper.getTransactionDTOFromTransaction(transaction.get());
     }
 
     @Override

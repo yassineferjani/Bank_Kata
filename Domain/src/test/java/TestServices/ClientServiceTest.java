@@ -43,13 +43,9 @@ class ClientServiceTest {
 	    }
 
 	@Test
-	void testDeleteById() {
-		Long id = 1L;
-		ClientDTO clientDTO = new ClientDTO();
-		when(clientPersistencePort.getById(id)).thenReturn(clientDTO);
-		clientServiceImp.deleteById(id);
-		verify(clientPersistencePort).getById(id);
-		verify(clientPersistencePort).deleteById(id);
+	void deleteById() {
+		clientServiceImp.deleteById(1L);
+		verify(clientPersistencePort).deleteById(1L);
 	}
 
 	    @Test

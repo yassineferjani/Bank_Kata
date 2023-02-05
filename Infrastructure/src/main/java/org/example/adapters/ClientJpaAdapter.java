@@ -2,6 +2,7 @@ package org.example.adapters;
 
 import org.example.data.ClientDTO;
 import org.example.entities.Client;
+import org.example.exception.ClientNotFoundException;
 import org.example.mappers.ClientMapper;
 import org.example.port.ClientPersistencePort;
 import org.example.repositories.ClientDAO;
@@ -15,8 +16,10 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 public class ClientJpaAdapter implements ClientPersistencePort {
-    @Autowired
     private ClientDAO clientDAO;
+    public ClientJpaAdapter(ClientDAO clientDAO){
+        this.clientDAO = clientDAO;
+    }
 
 
     @Override
@@ -27,17 +30,13 @@ public class ClientJpaAdapter implements ClientPersistencePort {
 
     @Override
     public List<ClientDTO> getAll() {
-        List<Client> clients = clientDAO.findAll();	
-        return clients.stream().map(c->ClientMapper.getClientDTOFromClient(c)).collect(Collectors.toList());
+        return clientDAO.findAll().stream().map(c->ClientMapper.getClientDTOFromClient(c)).collect(Collectors.toList());
     }
 
     @Override
     public ClientDTO getById(Long id) {
-        Optional<Client> client = clientDAO.findById(id);
-        if (client.isPresent())
-            return ClientMapper.getClientDTOFromClient(client.get());
-        else
-            return null;
+       Optional<Client> client = clientDAO.findById(id);
+       return ClientMapper.getClientDTOFromClient(client.get());
     }
 
     @Override
@@ -47,6 +46,7 @@ public class ClientJpaAdapter implements ClientPersistencePort {
 
     @Override
     public void update(ClientDTO clientDTO) {
-        add(clientDTO);
+        Client client = ClientMapper.getClientFromClientDTO(clientDTO);
+        clientDAO.save(client);
     }
 }
